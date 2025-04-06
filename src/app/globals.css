@@ -1,0 +1,42 @@
+@import "tailwindcss";
+
+
+/* General button styling */
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.25rem 0.75rem;
+    border-radius: 0.375rem;
+    color: white;
+    font-weight: 500;
+    transition: transform 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    transform: translateZ(0); /* Prevents layout shift */
+    cursor: pointer;
+  }
+  
+  /* Hover effect for scaling */
+  .btn:hover {
+    transform: scale(1.05);
+  }
+  
+  /* Edit button specific */
+  .btn-edit {
+    background-color: #3b82f6; /* blue-500 */
+  }
+  
+  .btn-edit:hover {
+    background-color: #2563eb; /* blue-600 */
+  }
+  
+  /* Delete button specific */
+  .btn-delete {
+    background-color: #ef4444; /* red-500 */
+    margin-left: 0.5rem; /* space between buttons */
+  }
+  
+  .btn-delete:hover {
+    background-color: #dc2626; /* red-600 */
+  }
+  

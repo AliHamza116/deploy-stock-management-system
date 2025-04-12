@@ -133,8 +133,6 @@ if (
   return;
 }
 
-
-
     toast.promise(
       fetch(`/api/products/${editProduct._id}`, {
         method: "PUT",

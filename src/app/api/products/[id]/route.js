@@ -23,14 +23,13 @@ export async function PUT(request, { params }) {
     return NextResponse.json({ error: "Product not found" }, { status: 404 });
   }
 
-  // Check if the user is a superadmin or the owner of the product
-  const isSuperAdmin = session.user.email === "alihamzaafzal888@gmail.com";
-  if (product.userId.toString() !== session.user.id && !isSuperAdmin) {
+  // Check if the logged-in user is the superadmin or owns the product
+  if (session.user.email !== 'alihamzaafzal888@gmail.com' && product.userId.toString() !== session.user.id) {
     return NextResponse.json({ error: "You are not authorized to edit this product" }, { status: 403 });
   }
 
   try {
-    const updatedProduct = await Product.findByIdAndUpdate(id, { $set: body }, { new: true });
+    const updatedProduct = await Product.findByIdAndUpdate(id, { $set: body }, { new: true }); // Update the product
     return NextResponse.json({ success: true, product: updatedProduct });
   } catch (error) {
     return NextResponse.json({ success: false, error: error.message });
@@ -56,9 +55,8 @@ export async function DELETE(request, context) {
     return NextResponse.json({ error: "Product not found" }, { status: 404 });
   }
 
-  // Check if the user is a superadmin or the owner of the product
-  const isSuperAdmin = session.user.email === "alihamzaafzal888@gmail.com";
-  if (product.userId.toString() !== session.user.id && !isSuperAdmin) {
+  // Check if the logged-in user is the superadmin or owns the product
+  if (session.user.email !== 'alihamzaafzal888@gmail.com' && product.userId.toString() !== session.user.id) {
     return NextResponse.json({ error: "You are not authorized to delete this product" }, { status: 403 });
   }
 

@@ -78,8 +78,9 @@ function Page() {
           quantity: Number(quantity),
           price: Number(price),
           category,
-          createdBy: isSuperAdmin ? "Superadmin" : session?.user?.email,  // Track who created the product
-        }),
+          createdBy: isSuperAdmin ? "Superadmin" : session?.user?.email,
+          userId: session?.user?.id,  // ✅ this line is essential!
+        }),        
       })
         .then((res) => {
           if (res.ok) {

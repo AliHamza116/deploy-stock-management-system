@@ -3,6 +3,8 @@
 import toast from "react-hot-toast";
 import React, { useState, useEffect } from "react";
 import Header from "@/components/Header";
+import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
 
 function Page() {
   const [productName, setProductName] = useState("");
@@ -13,6 +15,25 @@ function Page() {
   const [searchCategory, setSearchCategory] = useState("");
   const [editProduct, setEditProduct] = useState(null);
   const [products, setProducts] = useState([]);
+  const [showLoginForm, setShowLoginForm] = useState(false);
+
+  // Use session to check if the user is signed in
+  const { data: session } = useSession();
+  const router = useRouter();
+
+  useEffect(() => {
+    const superAdminEmail = "alihamzaafzal888@gmail.com";
+  
+    if (
+      session &&
+      session.user?.email === superAdminEmail &&
+      !sessionStorage.getItem("superadminToastShown")
+    ) {
+      toast.success("Welcome back, Superadmin! 🎉");
+      sessionStorage.setItem("superadminToastShown", "true");
+    }
+  }, [session]);
+  
 
   const fetchProducts = async () => {
     try {
@@ -29,12 +50,22 @@ function Page() {
   }, []);
 
   const handleAddProduct = () => {
+    if (!session) {
+      toast.error("❌ You must be signed in to perform this action!");
+      setTimeout(() => {
+        setShowLoginForm(true);
+      }, 1500);
+      return;
+    }
+
     if (!productName || !quantity || !price || !category) {
       toast.error("Please fill in all fields");
       return;
     }
 
-    // Wrap the fetch operation with toast.promise
+    // Check if the logged-in user is the superadmin
+    const isSuperAdmin = session?.user?.email === "alihamzaafzal888@gmail.com";
+
     toast.promise(
       fetch("/api/products", {
         method: "POST",
@@ -46,6 +77,7 @@ function Page() {
           quantity: Number(quantity),
           price: Number(price),
           category,
+          createdBy: isSuperAdmin ? "Superadmin" : session?.user?.email,  // Track who created the product
         }),
       })
         .then((res) => {
@@ -71,14 +103,24 @@ function Page() {
   };
 
   const handleupdateProduct = () => {
-    if (!editProduct) return; // If there's no product to update, exit early
+    if (!session) {
+      toast.error("❌ You must be signed in to perform this action!");
+      setTimeout(() => {
+        setShowLoginForm(true);
+      }, 1500);
+      return;
+    }
+
+    if (!editProduct) return;
 
     if (!productName || !quantity || !price || !category) {
       toast.error("Please fill in all fields");
       return;
     }
 
-    // Wrap the fetch operation with toast.promise
+    // Check if the logged-in user is the superadmin
+    const isSuperAdmin = session?.user?.email === "alihamzaafzal888@gmail.com";
+
     toast.promise(
       fetch(`/api/products/${editProduct._id}`, {
         method: "PUT",
@@ -116,13 +158,18 @@ function Page() {
   };
 
   const handleDeleteProduct = async (id) => {
-    // Confirm deletion with the user if needed
-    const confirmed = window.confirm(
-      "Are you sure you want to delete this product?"
-    );
-    if (!confirmed) return;
+    if (!session) {
+      toast.error("❌ You must be signed in to perform this action!");
+      setTimeout(() => {
+        setShowLoginForm(true);
+      }, 1500);
+      return;
+    }
 
-    // Perform the delete action
+    // Check if the logged-in user is the superadmin
+    const isSuperAdmin = session?.user?.email === "alihamzaafzal888@gmail.com";
+
+    // If the logged-in user is the superadmin or the product was created by them
     toast.promise(
       fetch(`/api/products/${id}`, {
         method: "DELETE",
@@ -134,7 +181,6 @@ function Page() {
           return res.json();
         })
         .then(() => {
-          // Refresh the product list after successful deletion
           fetchProducts();
         }),
       {
@@ -152,13 +198,13 @@ function Page() {
     setPrice(product.price);
     setCategory(product.category);
 
-    // Scroll to top smoothly
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   return (
     <>
-      <Header />
+      <Header showLoginForm={showLoginForm} setShowLoginForm={setShowLoginForm} />
+      
       <div className="container mx-auto p-4">
         <h1 className="text-2xl font-bold mb-4">Add a Product</h1>
 
@@ -249,35 +295,36 @@ function Page() {
               </tr>
             </thead>
             <tbody>
-              {products
-                .filter((p) =>
-                  p.name.toLowerCase().includes(search.toLowerCase())
-                )
-                .filter((p) =>
-                  searchCategory ? p.category === searchCategory : true
-                )
-                .map((prod, index) => (
-                  <tr key={index}>
-                    <td className="border px-4 py-2">{prod.name}</td>
-                    <td className="border px-4 py-2">{prod.quantity}</td>
-                    <td className="border px-4 py-2">${prod.price}</td>
-                    <td className="border px-4 py-2">{prod.category}</td>
-                    <td className="border px-4 py-2">
-                      <button
-                        onClick={() => handleEditClick(prod)}
-                        className="bg-blue-500 text-white px-3 py-1 rounded btn btn-edit"
-                      >
-                        Edit
-                      </button>
-                      <button
-                        onClick={() => handleDeleteProduct(prod._id)}
-                        className="bg-red-500 text-white px-3 py-1 rounded ml-2 btn btn-delete"
-                      >
-                        Delete
-                      </button>
-                    </td>
-                  </tr>
-                ))}
+              {Array.isArray(products) &&
+                products
+                  .filter((p) =>
+                    p.name.toLowerCase().includes(search.toLowerCase())
+                  )
+                  .filter((p) =>
+                    searchCategory ? p.category === searchCategory : true
+                  )
+                  .map((prod, index) => (
+                    <tr key={index}>
+                      <td className="border px-4 py-2">{prod.name}</td>
+                      <td className="border px-4 py-2">{prod.quantity}</td>
+                      <td className="border px-4 py-2">${prod.price}</td>
+                      <td className="border px-4 py-2">{prod.category}</td>
+                      <td className="border px-4 py-2">
+                        <button
+                          onClick={() => handleEditClick(prod)}
+                          className="bg-blue-500 text-white px-3 py-1 rounded btn btn-edit"
+                        >
+                          Edit
+                        </button>
+                        <button
+                          onClick={() => handleDeleteProduct(prod._id)}
+                          className="bg-red-500 text-white px-3 py-1 rounded ml-2 btn btn-delete"
+                        >
+                          Delete
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
             </tbody>
           </table>
         </div>

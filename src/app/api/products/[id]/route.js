@@ -4,7 +4,6 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 
-
 // PUT: Edit a product by ID
 export async function PUT(request, { params }) {
   await dbConnect(); // Connect to DB
@@ -12,7 +11,6 @@ export async function PUT(request, { params }) {
   const body = await request.json(); // Get the request body
   const session = await getServerSession(authOptions); // Get session data
   console.log("SESSION:", session);
-
 
   if (!session) {
     return NextResponse.json({ error: "You must be logged in to edit a product" }, { status: 403 });
@@ -25,13 +23,14 @@ export async function PUT(request, { params }) {
     return NextResponse.json({ error: "Product not found" }, { status: 404 });
   }
 
-  // Ensure that the logged-in user owns the product
-  if (product.userId.toString() !== session.user.id) {
+  // Check if the user is a superadmin or the owner of the product
+  const isSuperAdmin = session.user.email === "alihamzaafzal888@gmail.com";
+  if (product.userId.toString() !== session.user.id && !isSuperAdmin) {
     return NextResponse.json({ error: "You are not authorized to edit this product" }, { status: 403 });
   }
 
   try {
-    const updatedProduct = await Product.findByIdAndUpdate(id, { $set: body }, { new: true }); // Update the product
+    const updatedProduct = await Product.findByIdAndUpdate(id, { $set: body }, { new: true });
     return NextResponse.json({ success: true, product: updatedProduct });
   } catch (error) {
     return NextResponse.json({ success: false, error: error.message });
@@ -57,8 +56,9 @@ export async function DELETE(request, context) {
     return NextResponse.json({ error: "Product not found" }, { status: 404 });
   }
 
-  // Ensure that the logged-in user owns the product
-  if (product.userId.toString() !== session.user.id) {
+  // Check if the user is a superadmin or the owner of the product
+  const isSuperAdmin = session.user.email === "alihamzaafzal888@gmail.com";
+  if (product.userId.toString() !== session.user.id && !isSuperAdmin) {
     return NextResponse.json({ error: "You are not authorized to delete this product" }, { status: 403 });
   }
 

@@ -50,6 +50,7 @@ function Page() {
   }, []);
 
   const handleAddProduct = () => {
+    
     if (!session) {
       toast.error("❌ You must be signed in to perform this action!");
       setTimeout(() => {
@@ -103,6 +104,7 @@ function Page() {
   };
 
   const handleupdateProduct = () => {
+
     if (!session) {
       toast.error("❌ You must be signed in to perform this action!");
       setTimeout(() => {
@@ -120,6 +122,17 @@ function Page() {
 
     // Check if the logged-in user is the superadmin
     const isSuperAdmin = session?.user?.email === "alihamzaafzal888@gmail.com";
+
+    // Inside handleupdateProduct function
+if (
+  !isSuperAdmin &&
+  editProduct.createdBy !== session?.user?.email
+) {
+  toast.error("❌ Only the creator or superadmin can update this product.");
+  return;
+}
+
+
 
     toast.promise(
       fetch(`/api/products/${editProduct._id}`, {
@@ -158,38 +171,48 @@ function Page() {
   };
 
   const handleDeleteProduct = async (id) => {
-    if (!session) {
-      toast.error("❌ You must be signed in to perform this action!");
-      setTimeout(() => {
-        setShowLoginForm(true);
-      }, 1500);
-      return;
-    }
+  if (!session) {
+    toast.error("❌ You must be signed in to perform this action!");
+    setTimeout(() => {
+      setShowLoginForm(true);
+    }, 1500);
+    return;
+  }
 
-    // Check if the logged-in user is the superadmin
-    const isSuperAdmin = session?.user?.email === "alihamzaafzal888@gmail.com";
+  const isSuperAdmin = session?.user?.email === "alihamzaafzal888@gmail.com";
 
-    // If the logged-in user is the superadmin or the product was created by them
-    toast.promise(
-      fetch(`/api/products/${id}`, {
-        method: "DELETE",
+  // Find the product to check ownership
+  const productToDelete = products.find((p) => p._id === id);
+  if (!productToDelete) return;
+
+  if (
+    !isSuperAdmin &&
+    productToDelete.createdBy !== session?.user?.email
+  ) {
+    toast.error("❌ Only the creator or superadmin can delete this product.");
+    return;
+  }
+
+  toast.promise(
+    fetch(`/api/products/${id}`, {
+      method: "DELETE",
+    })
+      .then((res) => {
+        if (!res.ok) {
+          throw new Error("Failed to delete product");
+        }
+        return res.json();
       })
-        .then((res) => {
-          if (!res.ok) {
-            throw new Error("Failed to delete product");
-          }
-          return res.json();
-        })
-        .then(() => {
-          fetchProducts();
-        }),
-      {
-        loading: "Deleting product...",
-        success: <b>Product deleted successfully! ✅</b>,
-        error: <b>Failed to delete product ❌</b>,
-      }
-    );
-  };
+      .then(() => {
+        fetchProducts();
+      }),
+    {
+      loading: "Deleting product...",
+      success: <b>Product deleted successfully! ✅</b>,
+      error: <b>Failed to delete product ❌</b>,
+    }
+  );
+};
 
   const handleEditClick = (product) => {
     setEditProduct(product);

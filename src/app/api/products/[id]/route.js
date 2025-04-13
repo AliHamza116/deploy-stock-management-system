@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
-import Product from "@/models/Product";
-import { connectToDB } from "@/utils/database";
-import User from "@/models/User";
+import Product from "../../../../models/Product";
+import { connectToDB } from "../../../../utils/database";
+import User from "../../../../models/User";
 
 export async function GET(request) {
   try {
@@ -17,7 +17,7 @@ export async function GET(request) {
 }
 
 export async function POST(request) {
-  const superAdminEmail = process.env.NEXT_PUBLIC_SUPERADMINEMAIL; // Read from .env file
+  const superAdminEmail = process.env.NEXT_PUBLIC_SUPERADMINEMAIL;
 
   try {
     const { name, quantity, price, category, createdBy, userId } = await request.json();
@@ -38,7 +38,6 @@ export async function POST(request) {
       return new NextResponse("User not found", { status: 404 });
     }
 
-    // If the user is a superadmin, allow them to add any product
     if (createdBy === superAdminEmail || user.email === createdBy) {
       await newProduct.save();
       return NextResponse.json(newProduct);
@@ -52,7 +51,7 @@ export async function POST(request) {
 }
 
 export async function PUT(request, { params }) {
-  const superAdminEmail = process.env.NEXT_PUBLIC_SUPERADMINEMAIL; // Read from .env file
+  const superAdminEmail = process.env.NEXT_PUBLIC_SUPERADMINEMAIL;
 
   try {
     const { id } = params;
@@ -68,7 +67,6 @@ export async function PUT(request, { params }) {
     const user = await User.findById(product.userId);
     const isSuperAdmin = user?.email === superAdminEmail;
 
-    // If the logged-in user is the superadmin or the creator of the product, allow them to update
     if (isSuperAdmin || product.createdBy === user?.email) {
       product.name = name;
       product.quantity = quantity;
@@ -87,7 +85,7 @@ export async function PUT(request, { params }) {
 }
 
 export async function DELETE(request, { params }) {
-  const superAdminEmail = process.env.NEXT_PUBLIC_SUPERADMINEMAIL; // Read from .env file
+  const superAdminEmail = process.env.NEXT_PUBLIC_SUPERADMINEMAIL;
 
   try {
     const { id } = params;
@@ -102,7 +100,6 @@ export async function DELETE(request, { params }) {
     const user = await User.findById(product.userId);
     const isSuperAdmin = user?.email === superAdminEmail;
 
-    // Only the superadmin or the product creator can delete the product
     if (isSuperAdmin || product.createdBy === user?.email) {
       await Product.findByIdAndDelete(id);
       return new NextResponse("Product deleted successfully", { status: 200 });

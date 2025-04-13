@@ -128,7 +128,7 @@ function Page() {
     // Inside handleupdateProduct function
 if (
   !isSuperAdmin &&
-  editProduct.createdBy !== session?.user?.email
+  editProduct.createdBy != session?.user?.email
 ) {
   toast.error("❌ Only the creator or superadmin can update this product.");
   return;
@@ -187,7 +187,7 @@ if (
 
   if (
     !isSuperAdmin &&
-    productToDelete.createdBy !== session?.user?.email
+    productToDelete.createdBy != session?.user?.email
   ) {
     toast.error("❌ Only the creator or superadmin can delete this product.");
     return;

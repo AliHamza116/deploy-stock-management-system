@@ -24,9 +24,9 @@ export async function PUT(request, { params }) {
   }
 
   // Check if the logged-in user is the superadmin or owns the product
-  if (session.user.email !== 'alihamzaafzal888@gmail.com' && product.userId.toString() !== session.user.id) {
-    return NextResponse.json({ error: "You are not authorized to edit this product" }, { status: 403 });
-  }
+  // if (session.user.email !== 'alihamzaafzal888@gmail.com' && product.userId.toString() !== session.user.id) {
+  //   return NextResponse.json({ error: "You are not authorized to edit this product" }, { status: 403 });
+  // }
 
   try {
     const updatedProduct = await Product.findByIdAndUpdate(id, { $set: body }, { new: true }); // Update the product
@@ -56,9 +56,9 @@ export async function DELETE(request, context) {
   }
 
   // Check if the logged-in user is the superadmin or owns the product
-  if (session.user.email !== 'alihamzaafzal888@gmail.com' && product.userId.toString() !== session.user.id) {
-    return NextResponse.json({ error: "You are not authorized to delete this product" }, { status: 403 });
-  }
+  // if (session.user.email !== 'alihamzaafzal888@gmail.com' && product.userId.toString() !== session.user.id) {
+  //   return NextResponse.json({ error: "You are not authorized to delete this product" }, { status: 403 });
+  // }
 
   try {
     const deletedProduct = await Product.findByIdAndDelete(id); // Delete the product

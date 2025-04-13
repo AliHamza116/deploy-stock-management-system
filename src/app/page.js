@@ -22,7 +22,7 @@ function Page() {
   const router = useRouter();
 
   useEffect(() => {
-    const superAdminEmail = "alihamzaafzal888@gmail.com";
+    // const superAdminEmail = "alihamzaafzal888@gmail.com";
   
     if (
       session &&
@@ -65,7 +65,7 @@ function Page() {
     }
 
     // Check if the logged-in user is the superadmin
-    const isSuperAdmin = session?.user?.email === "alihamzaafzal888@gmail.com";
+    // const isSuperAdmin = session?.user?.email === "alihamzaafzal888@gmail.com";
 
     toast.promise(
       fetch("/api/products", {
@@ -122,7 +122,7 @@ function Page() {
     }
 
     // Check if the logged-in user is the superadmin
-    const isSuperAdmin = session?.user?.email === "alihamzaafzal888@gmail.com";
+    // const isSuperAdmin = session?.user?.email === "alihamzaafzal888@gmail.com";
 
     // Inside handleupdateProduct function
 if (
@@ -178,7 +178,7 @@ if (
     return;
   }
 
-  const isSuperAdmin = session?.user?.email === "alihamzaafzal888@gmail.com";
+  // const isSuperAdmin = session?.user?.email === "alihamzaafzal888@gmail.com";
 
   // Find the product to check ownership
   const productToDelete = products.find((p) => p._id === id);

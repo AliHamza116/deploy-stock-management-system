@@ -21,9 +21,9 @@ function Page() {
   const { data: session } = useSession();
   const router = useRouter();
 
+  const superAdminEmail = process.env.NEXT_PUBLIC_SUPERADMINEMAIL; // Read from .env file
+
   useEffect(() => {
-    const superAdminEmail = "SUPERADMINEMAIL";
-  
     if (
       session &&
       session.user?.email === superAdminEmail &&
@@ -33,7 +33,6 @@ function Page() {
       sessionStorage.setItem("superadminToastShown", "true");
     }
   }, [session]);
-  
 
   const fetchProducts = async () => {
     try {
@@ -50,7 +49,6 @@ function Page() {
   }, []);
 
   const handleAddProduct = () => {
-    
     if (!session) {
       toast.error("❌ You must be signed in to perform this action!");
       setTimeout(() => {
@@ -65,7 +63,7 @@ function Page() {
     }
 
     // Check if the logged-in user is the superadmin
-    const isSuperAdmin = session?.user?.email === "SUPERADMINEMAIL";
+    const isSuperAdmin = session?.user?.email === superAdminEmail;
 
     toast.promise(
       fetch("/api/products", {
@@ -105,7 +103,6 @@ function Page() {
   };
 
   const handleupdateProduct = () => {
-
     if (!session) {
       toast.error("❌ You must be signed in to perform this action!");
       setTimeout(() => {
@@ -122,16 +119,16 @@ function Page() {
     }
 
     // Check if the logged-in user is the superadmin
-    const isSuperAdmin = session?.user?.email === "SUPERADMINEMAIL";
+    const isSuperAdmin = session?.user?.email === superAdminEmail;
 
     // Inside handleupdateProduct function
-if (
-  !isSuperAdmin &&
-  editProduct.createdBy !== session?.user?.email
-) {
-  toast.error("❌ Only the creator or superadmin can update this product.");
-  return;
-}
+    if (
+      !isSuperAdmin &&
+      editProduct.createdBy !== session?.user?.email
+    ) {
+      toast.error("❌ Only the creator or superadmin can update this product.");
+      return;
+    }
 
     toast.promise(
       fetch(`/api/products/${editProduct._id}`, {
@@ -170,48 +167,48 @@ if (
   };
 
   const handleDeleteProduct = async (id) => {
-  if (!session) {
-    toast.error("❌ You must be signed in to perform this action!");
-    setTimeout(() => {
-      setShowLoginForm(true);
-    }, 1500);
-    return;
-  }
-
-  const isSuperAdmin = session?.user?.email === "SUPERADMINEMAIL";
-
-  // Find the product to check ownership
-  const productToDelete = products.find((p) => p._id === id);
-  if (!productToDelete) return;
-
-  if (
-    !isSuperAdmin &&
-    productToDelete.createdBy !== session?.user?.email
-  ) {
-    toast.error("❌ Only the creator or superadmin can delete this product.");
-    return;
-  }
-
-  toast.promise(
-    fetch(`/api/products/${id}`, {
-      method: "DELETE",
-    })
-      .then((res) => {
-        if (!res.ok) {
-          throw new Error("Failed to delete product");
-        }
-        return res.json();
-      })
-      .then(() => {
-        fetchProducts();
-      }),
-    {
-      loading: "Deleting product...",
-      success: <b>Product deleted successfully! ✅</b>,
-      error: <b>Failed to delete product ❌</b>,
+    if (!session) {
+      toast.error("❌ You must be signed in to perform this action!");
+      setTimeout(() => {
+        setShowLoginForm(true);
+      }, 1500);
+      return;
     }
-  );
-};
+
+    const isSuperAdmin = session?.user?.email === superAdminEmail;
+
+    // Find the product to check ownership
+    const productToDelete = products.find((p) => p._id === id);
+    if (!productToDelete) return;
+
+    if (
+      !isSuperAdmin &&
+      productToDelete.createdBy !== session?.user?.email
+    ) {
+      toast.error("❌ Only the creator or superadmin can delete this product.");
+      return;
+    }
+
+    toast.promise(
+      fetch(`/api/products/${id}`, {
+        method: "DELETE",
+      })
+        .then((res) => {
+          if (!res.ok) {
+            throw new Error("Failed to delete product");
+          }
+          return res.json();
+        })
+        .then(() => {
+          fetchProducts();
+        }),
+      {
+        loading: "Deleting product...",
+        success: <b>Product deleted successfully! ✅</b>,
+        error: <b>Failed to delete product ❌</b>,
+      }
+    );
+  };
 
   const handleEditClick = (product) => {
     setEditProduct(product);
@@ -301,54 +298,47 @@ if (
             <option value="electronics">Electronics</option>
             <option value="clothing">Clothing</option>
             <option value="groceries">Groceries</option>
-            <option value="others">Others</option>
+            <option value="Other">Other</option>
           </select>
         </div>
 
-        <div className="overflow-x-auto">
-          <table className="min-w-full bg-white border border-gray-300 mt-4">
-            <thead>
-              <tr className="bg-gray-200">
-                <th className="border px-4 py-2">Product Name</th>
-                <th className="border px-4 py-2">Quantity</th>
-                <th className="border px-4 py-2">Price</th>
-                <th className="border px-4 py-2">Category</th>
-                <th className="border px-4 py-2">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {Array.isArray(products) &&
-                products
-                  .filter((p) =>
-                    p.name.toLowerCase().includes(search.toLowerCase())
-                  )
-                  .filter((p) =>
-                    searchCategory ? p.category === searchCategory : true
-                  )
-                  .map((prod, index) => (
-                    <tr key={index}>
-                      <td className="border px-4 py-2">{prod.name}</td>
-                      <td className="border px-4 py-2">{prod.quantity}</td>
-                      <td className="border px-4 py-2">${prod.price}</td>
-                      <td className="border px-4 py-2">{prod.category}</td>
-                      <td className="border px-4 py-2">
-                        <button
-                          onClick={() => handleEditClick(prod)}
-                          className="bg-blue-500 text-white px-3 py-1 rounded btn btn-edit"
-                        >
-                          Edit
-                        </button>
-                        <button
-                          onClick={() => handleDeleteProduct(prod._id)}
-                          className="bg-red-500 text-white px-3 py-1 rounded ml-2 btn btn-delete"
-                        >
-                          Delete
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-            </tbody>
-          </table>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {products
+            .filter((product) => {
+              return (
+                (product.name
+                  .toLowerCase()
+                  .includes(search.toLowerCase()) ||
+                  product.category
+                    .toLowerCase()
+                    .includes(search.toLowerCase())) &&
+                (searchCategory === "" ||
+                  product.category === searchCategory)
+              );
+            })
+            .map((product) => (
+              <div key={product._id} className="bg-white p-4 rounded-lg shadow-md">
+                <h2 className="text-xl font-semibold">{product.name}</h2>
+                <p className="text-gray-600">Quantity: {product.quantity}</p>
+                <p className="text-gray-600">Price: ${product.price}</p>
+                <p className="text-gray-600">Category: {product.category}</p>
+
+                <div className="mt-4 flex justify-between">
+                  <button
+                    onClick={() => handleEditClick(product)}
+                    className="bg-yellow-500 text-white px-4 py-2 rounded shadow hover:bg-yellow-600"
+                  >
+                    Edit
+                  </button>
+                  <button
+                    onClick={() => handleDeleteProduct(product._id)}
+                    className="bg-red-500 text-white px-4 py-2 rounded shadow hover:bg-red-600"
+                  >
+                    Delete
+                  </button>
+                </div>
+              </div>
+            ))}
         </div>
       </div>
     </>

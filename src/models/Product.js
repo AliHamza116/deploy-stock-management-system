@@ -6,7 +6,7 @@ const productSchema = new mongoose.Schema(
     quantity: { type: Number, required: true },
     price: { type: Number, required: true },
     category: { type: String, required: true },
-    userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true }, // Add userId
+    userId: { type: mongoose.Schema.Types.ObjectId, ref: "StockUser", required: true }, // ✅ Correct ref
   },
   {
     timestamps: true,
@@ -15,4 +15,3 @@ const productSchema = new mongoose.Schema(
 
 const Product = mongoose.models.Stocks || mongoose.model("Stocks", productSchema);
 export default Product;
-

@@ -21,8 +21,7 @@ export async function GET(request) {
 export async function POST(request) {
   await dbConnect();
   
-  const session = await getServerSession(authOptions); // Get session data
-  console.log("SESSION:", session);
+  const session = await getServerSession(authOptions); // ✅ Correct way
 
   
   if (!session) {

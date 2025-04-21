@@ -1,113 +1,71 @@
+import dbConnect from "@/utils/dbConnect";
+import Product from "@/models/Product";
 import { NextResponse } from "next/server";
-import Product from "../../../../models/Product";
-import { connectToDB } from "../../../../utils/database";
-import User from "../../../../models/User";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 
-export async function GET(request) {
-  try {
-    await connectToDB();
 
-    const products = await Product.find();
-
-    return NextResponse.json(products);
-  } catch (error) {
-    console.log(error);
-    return new NextResponse("Failed to fetch products", { status: 500 });
-  }
-}
-
-export async function POST(request) {
-  const superAdminEmail = process.env.NEXT_PUBLIC_SUPERADMINEMAIL;
-
-  try {
-    const { name, quantity, price, category, createdBy, userId } = await request.json();
-
-    await connectToDB();
-
-    const newProduct = new Product({
-      name,
-      quantity,
-      price,
-      category,
-      createdBy,
-      userId,
-    });
-
-    const user = await User.findById(userId);
-    if (!user) {
-      return new NextResponse("User not found", { status: 404 });
-    }
-
-    if (createdBy === superAdminEmail || user.email === createdBy) {
-      await newProduct.save();
-      return NextResponse.json(newProduct);
-    }
-
-    return new NextResponse("Only superadmin or the product creator can add products.", { status: 403 });
-  } catch (error) {
-    console.log(error);
-    return new NextResponse("Failed to add product", { status: 500 });
-  }
-}
-
+// PUT: Edit a product by ID
 export async function PUT(request, { params }) {
-  const superAdminEmail = process.env.NEXT_PUBLIC_SUPERADMINEMAIL;
+  await dbConnect(); // Connect to DB
+  const { id } = params; // Extract product ID from params
+  const body = await request.json(); // Get the request body
+  const session = await getServerSession(authOptions); // ✅ Correct way
+
+
+  if (!session) {
+    return NextResponse.json({ error: "You must be logged in to edit a product" }, { status: 403 });
+  }
+
+  // Find the product by ID
+  const product = await Product.findById(id);
+
+  if (!product) {
+    return NextResponse.json({ error: "Product not found" }, { status: 404 });
+  }
+
+const isSuperAdmin = session.user.email === process.env.NEXT_PUBLIC_SUPERADMINEMAIL;
+  if (product.userId.toString() !== session.user.id && !isSuperAdmin) {
+    return NextResponse.json({ error: "Only superadmin can update the products of others." }, { status: 403 });
+  }
 
   try {
-    const { id } = params;
-    const { name, quantity, price, category } = await request.json();
-
-    await connectToDB();
-
-    const product = await Product.findById(id);
-    if (!product) {
-      return new NextResponse("Product not found", { status: 404 });
-    }
-
-    const user = await User.findById(product.userId);
-    const isSuperAdmin = user?.email === superAdminEmail;
-
-    if (isSuperAdmin || product.createdBy === user?.email) {
-      product.name = name;
-      product.quantity = quantity;
-      product.price = price;
-      product.category = category;
-
-      await product.save();
-      return NextResponse.json(product);
-    }
-
-    return new NextResponse("Only superadmin or the product creator can update the product.", { status: 403 });
+    const updatedProduct = await Product.findByIdAndUpdate(id, { $set: body }, { new: true }); // Update the product
+    return NextResponse.json({ success: true, product: updatedProduct });
   } catch (error) {
-    console.log(error);
-    return new NextResponse("Failed to update product", { status: 500 });
+    return NextResponse.json({ success: false, error: error.message });
   }
 }
 
-export async function DELETE(request, { params }) {
-  const superAdminEmail = process.env.NEXT_PUBLIC_SUPERADMINEMAIL;
+// DELETE: Delete a product by ID
+export async function DELETE(request, context) {
+  await dbConnect(); // Connect to DB
+
+  const { params } = context;
+  const { id } = params; // Extract product ID from params
+  const session = await getServerSession(authOptions); // ✅ Correct way
+
+  if (!session) {
+    return NextResponse.json({ error: "You must be logged in to delete a product" }, { status: 403 });
+  }
+
+  // Find the product by ID
+  const product = await Product.findById(id);
+
+  if (!product) {
+    return NextResponse.json({ error: "Product not found" }, { status: 404 });
+  }
+
+  const isSuperAdmin = session.user.email === process.env.NEXT_PUBLIC_SUPERADMINEMAIL;
+
+  if (product.userId.toString() !== session.user.id && !isSuperAdmin) {
+    return NextResponse.json({ error: "Only superadmin can delete the products of others." }, { status: 403 });
+  }
 
   try {
-    const { id } = params;
-
-    await connectToDB();
-
-    const product = await Product.findById(id);
-    if (!product) {
-      return new NextResponse("Product not found", { status: 404 });
-    }
-
-    const user = await User.findById(product.userId);
-    const isSuperAdmin = user?.email === superAdminEmail;
-
-    if (isSuperAdmin || product.createdBy === user?.email) {
-      await Product.findByIdAndDelete(id);
-      return new NextResponse("Product deleted successfully", { status: 200 });
-    }
-
-    return new NextResponse("Only superadmin or the product creator can delete the product.", { status: 403 });
+    const deletedProduct = await Product.findByIdAndDelete(id); // Delete the product
+    return NextResponse.json({ success: true, message: "Product deleted successfully" });
   } catch (error) {
-    console.log(error);
-    return new NextResponse("Failed to delete product", { status: 500 });
+    return NextResponse.json({ success: false, error: error.message });
   }
 }

@@ -56,7 +56,7 @@ const Header = ({ showLoginForm, setShowLoginForm }) => {
               </>
             ) : (
               <button
-                onClick={() => setShowLoginForm(true)}
+              onClick={() => setShowLoginForm(true)}
                 className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition cursor-pointer"
               >
                 Login
@@ -67,7 +67,6 @@ const Header = ({ showLoginForm, setShowLoginForm }) => {
       </header>
 
       {showLoginForm && (
-
         <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm bg-black/10">
           <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-md relative">
             <button

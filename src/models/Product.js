@@ -6,7 +6,7 @@ const productSchema = new mongoose.Schema(
     quantity: { type: Number, required: true },
     price: { type: Number, required: true },
     category: { type: String, required: true },
-    userId: { type: mongoose.Schema.Types.ObjectId, ref: "StockUser", required: true }, // ✅ Correct ref
+    userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true }, // Add userId
   },
   {
     timestamps: true,

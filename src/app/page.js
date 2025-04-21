@@ -1,4 +1,3 @@
-
 "use client";
 
 import toast from "react-hot-toast";
@@ -18,23 +17,17 @@ function Page() {
   const [products, setProducts] = useState([]);
   const [showLoginForm, setShowLoginForm] = useState(false);
 
+
   // Use session to check if the user is signed in
   const { data: session } = useSession();
-  const router = useRouter();
-
   useEffect(() => {
-    const superAdminEmail = process.env.NEXT_PUBLIC_SUPERADMINEMAIL;
-  
-    if (
-      session &&
-      session.user?.email === superAdminEmail &&
-      !sessionStorage.getItem("superadminToastShown")
-    ) {
-      toast.success("Welcome back, Superadmin! 🎉");
-      sessionStorage.setItem("superadminToastShown", "true");
+    if (session?.user?.email === process.env.NEXT_PUBLIC_SUPERADMINEMAIL) {
+      toast.success("Welcome Superadmin! 👑");
     }
   }, [session]);
   
+
+  const router = useRouter();
 
   const fetchProducts = async () => {
     try {
@@ -51,7 +44,6 @@ function Page() {
   }, []);
 
   const handleAddProduct = () => {
-    
     if (!session) {
       toast.error("❌ You must be signed in to perform this action!");
       setTimeout(() => {
@@ -65,9 +57,6 @@ function Page() {
       return;
     }
 
-    // Check if the logged-in user is the superadmin
-    const isSuperAdmin = session?.user?.email === process.env.NEXT_PUBLIC_SUPERADMINEMAIL;
-
     toast.promise(
       fetch("/api/products", {
         method: "POST",
@@ -79,9 +68,7 @@ function Page() {
           quantity: Number(quantity),
           price: Number(price),
           category,
-          createdBy: isSuperAdmin ? "Superadmin" : session?.user?.email,
-          userId: session?.user?.id,  // ✅ this line is essential!
-        }),        
+        }),
       })
         .then((res) => {
           if (res.ok) {
@@ -106,7 +93,6 @@ function Page() {
   };
 
   const handleupdateProduct = () => {
-
     if (!session) {
       toast.error("❌ You must be signed in to perform this action!");
       setTimeout(() => {
@@ -114,26 +100,22 @@ function Page() {
       }, 1500);
       return;
     }
-
+  
     if (!editProduct) return;
-
+  
+    const isSuperadmin = session.user.email === process.env.NEXT_PUBLIC_SUPERADMINEMAIL;
+    const isOwner = session.user.id === editProduct.userId;
+  
+    if (!isSuperadmin && !isOwner) {
+      toast.error("Only superadmin can edit the products of others.");
+      return;
+    }
+  
     if (!productName || !quantity || !price || !category) {
       toast.error("Please fill in all fields");
       return;
     }
-
-    // Check if the logged-in user is the superadmin
-    const isSuperAdmin = session?.user?.email === process.env.NEXT_PUBLIC_SUPERADMINEMAIL;
-
-    // Inside handleupdateProduct function
-if (
-  !isSuperAdmin &&
-  editProduct.createdBy != session?.user?.email
-) {
-  toast.error("❌ Only the creator or superadmin can update this product.");
-  return;
-}
-
+  
     toast.promise(
       fetch(`/api/products/${editProduct._id}`, {
         method: "PUT",
@@ -148,11 +130,8 @@ if (
         }),
       })
         .then((res) => {
-          if (res.ok) {
-            return res.json();
-          } else {
-            throw new Error("Failed to update product");
-          }
+          if (res.ok) return res.json();
+          throw new Error("Failed to update product");
         })
         .then(() => {
           setEditProduct(null);
@@ -160,7 +139,7 @@ if (
           setQuantity("");
           setPrice("");
           setCategory("");
-          fetchProducts(); // Refresh product list
+          fetchProducts();
         }),
       {
         loading: "Updating product...",
@@ -169,50 +148,48 @@ if (
       }
     );
   };
+  
 
   const handleDeleteProduct = async (id) => {
-  if (!session) {
-    toast.error("❌ You must be signed in to perform this action!");
-    setTimeout(() => {
-      setShowLoginForm(true);
-    }, 1500);
-    return;
-  }
-
-  const isSuperAdmin = session?.user?.email === process.env.NEXT_PUBLIC_SUPERADMINEMAIL;
-
-  // Find the product to check ownership
-  const productToDelete = products.find((p) => p._id === id);
-  if (!productToDelete) return;
-
-  if (
-    !isSuperAdmin &&
-    productToDelete.createdBy != session?.user?.email
-  ) {
-    toast.error("❌ Only the creator or superadmin can delete this product.");
-    return;
-  }
-
-  toast.promise(
-    fetch(`/api/products/${id}`, {
-      method: "DELETE",
-    })
-      .then((res) => {
-        if (!res.ok) {
-          throw new Error("Failed to delete product");
-        }
-        return res.json();
-      })
-      .then(() => {
-        fetchProducts();
-      }),
-    {
-      loading: "Deleting product...",
-      success: <b>Product deleted successfully! ✅</b>,
-      error: <b>Failed to delete product ❌</b>,
+    if (!session) {
+      toast.error("❌ You must be signed in to perform this action!");
+      setTimeout(() => {
+        setShowLoginForm(true);
+      }, 1500);
+      return;
     }
-  );
-};
+  
+    const product = products.find((p) => p._id === id);
+    const isSuperadmin = session.user.email === process.env.NEXT_PUBLIC_SUPERADMINEMAIL;
+    const isOwner = session.user.id === product?.userId;
+  
+    if (!isSuperadmin && !isOwner) {
+      toast.error("Only superadmin can delete the products of others.");
+      return;
+    }
+  
+    const confirmed = window.confirm("Are you sure you want to delete this product?");
+    if (!confirmed) return;
+  
+    toast.promise(
+      fetch(`/api/products/${id}`, {
+        method: "DELETE",
+      })
+        .then((res) => {
+          if (!res.ok) throw new Error("Failed to delete product");
+          return res.json();
+        })
+        .then(() => {
+          fetchProducts();
+        }),
+      {
+        loading: "Deleting product...",
+        success: <b>Product deleted successfully! ✅</b>,
+        error: <b>Failed to delete product ❌</b>,
+      }
+    );
+  };
+  
 
   const handleEditClick = (product) => {
     setEditProduct(product);
@@ -357,5 +334,3 @@ if (
 }
 
 export default Page;
-
-
